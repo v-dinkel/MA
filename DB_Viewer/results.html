@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>DB Browser</title>
+    <link rel="stylesheet" href="css/style.css"/>
+	<link rel="stylesheet" href="css/jquery.dataTables.min.css"/>
+	<link rel="stylesheet" href="css/buttons.dataTables.min.css"/>
+	<link href="bootstrap/css/bootstrap.css" rel="stylesheet" type="text/css" media="screen" />
+</head>
+<body>
+
+<div class="container-fluid">
+
+<!-- Modal -->
+<div id="myModal" class="modal fade" role="dialog">
+  <div class="modal-dialog modal-lg">
+
+    <!-- Modal content-->
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+        <h4 class="modal-title">Results</h4>
+      </div>
+      <div class="modal-body">
+		<img id = 'vesselView' src='' style = 'width:780px;' />
+		<img id = 'widthHqGif' src='' style = 'width:780px;' />
+		<img id = 'widthGif' src='' style = 'width:780px;' />
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+<div class="row" style="background-color:gray;height:70px; padding-top:5px;">
+	<div class="col-md-12" style='color: white;'>
+	
+		<div class="input-group">
+		  <span class="input-group-addon">SQL</span>
+		  <input id='query' type="text" value="SELECT * FROM results" class="form-control" aria-label="Amount (to the nearest dollar)">
+		  <span class="input-group-addon"><button id ="performQuery" type="button" class="btn btn-primary">></button></span>
+		</div>
+  
+	</div>
+</div>
+
+
+<div class="row" style="height:850px; padding-top:10px;">
+	
+	<div class="col-md-12">
+		<table id="resultsTable" class="display"></table>
+	</div>
+
+</div>
+</div>
+
+
+
+<script type="text/javascript" src="js/jquery.min.js"></script>
+<script type="text/javascript" src="js/jquery.cookie.js"></script>
+<script type="text/javascript" src="Bootstrap/js/bootstrap.js"></script>
+<script type="text/javascript" src="js/jquery.dataTables.min.js"></script>
+
+<script type="text/javascript" src="js/dataTables.buttons.min.js"></script>
+<script type="text/javascript" src="js/jszip.min.js"></script>
+<script type="text/javascript" src="js/pdfmake.min.js"></script>
+<script type="text/javascript" src="js/vfs_fonts.js"></script>
+<script type="text/javascript" src="js/buttons.html5.min.js"></script>
+
+<script>
+$(document).ready(function(){
+	var table
+	$('#query').val($.cookie("query"))
+	$.ajax({
+	  url: "getResults.php",
+	  data: {query : 'no'},
+	  type: 'GET',
+	  cache: false,
+	  success: function(html){
+		$("#resultsTable").append(html);
+		table = $('#resultsTable').DataTable({
+			paging: false,
+			dom: 'Bfrtip',
+			buttons: [
+            'copyHtml5',
+            'excelHtml5',
+            'csvHtml5',
+            'pdfHtml5'
+			]
+		});
+		appendAllStuff()
+		}
+		
+	});
+	
+	$( "#performQuery" ).bind( "click", function() {
+	  console.log( $('#query').val() );
+	  $.cookie("query", $('#query').val())
+	  $.ajax({
+		  url: "getResults.php",
+		  data: {query : $('#query').val()},
+		  type: 'GET',
+		  cache: false,
+		  success: function(html){
+			table.destroy();
+			$("#resultsTable").html('');
+			$("#resultsTable").append(html);
+			table = $('#resultsTable').DataTable({
+				paging: false,
+				dom: 'Bfrtip',
+				buttons: [
+				'copyHtml5',
+				'excelHtml5',
+				'csvHtml5',
+				'pdfHtml5'
+				]
+			});
+			appendAllStuff()
+		  }
+		});
+	});
+	
+	$('#query').keypress(function(e) {
+          if(e.keyCode === 13){
+			$.cookie("query", $('#query').val())
+		  	  $.ajax({
+				  url: "getResults.php",
+				  data: {query : $('#query').val()},
+				  type: 'GET',
+				  cache: false,
+				  success: function(html){
+					table.destroy();
+					$("#resultsTable").html('');
+					$("#resultsTable").append(html);
+					table = $('#resultsTable').DataTable({
+						paging: false,
+						dom: 'Bfrtip',
+						buttons: [
+						'copyHtml5',
+						'excelHtml5',
+						'csvHtml5',
+						'pdfHtml5'
+						]
+					});
+					appendAllStuff()
+				  }
+				});
+		  }
+	});
+
+	function verifiedChanged(e) {
+		console.log('changed: '+$(e).parent()[0].id+' to '+$(e).val())
+		var changeValue = $(e).val();
+		var changeID = $(e).parent()[0].id;
+		 $.ajax({
+				  url: "changeVerified.php",
+				  data: {id : changeID, value : changeValue},
+				  type: 'GET',
+				  cache: false,
+				  success: function(html){
+					console.log(html)
+					if (html === 'success')
+						$("#"+changeID+".verified").css('background-color','#33cc33')
+				  }
+				});
+	}
+	
+	function classChanged(e) {
+		console.log('changed: '+$(e).parent()[0].id+' to '+$(e).val())
+		var changeValue = $(e).val();
+		var changeID = $(e).parent()[0].id;
+		 $.ajax({
+				  url: "changeVesselClass.php",
+				  data: {id : changeID, value : changeValue},
+				  type: 'GET',
+				  cache: false,
+				  success: function(html){
+					console.log(html)
+					if (html === 'success')
+						$("#"+changeID+".vesselClass").css('background-color','#33cc33')
+				  }
+				});
+	}
+	
+	function appendAllStuff(){
+	
+		$( ".verifiedSelector" ).change(function() {
+				verifiedChanged(this);
+				$('.verifiedSelector').each(updateVerifiedRowColor)
+			});
+		
+		$( ".vesselClassSelector" ).change(function() {
+				classChanged(this);
+			});
+				
+		$('.vessel').click(function(e) {
+				$(this).addClass('activeVessel')
+				var url = $(this).data('url')
+				$('#vesselView').attr("src",url)
+				var gifsUrl = url.split('/').slice(0, -3).join('/')+'/gifs/'
+				$('#widthGif').attr("src", gifsUrl+'width.gif')
+				$('#widthHqGif').attr("src", gifsUrl+'width_hq.gif')
+				console.log('clicked', url)
+			});
+			
+		$('#myModal').on('hidden.bs.modal', function () {
+			$('.activeVessel').removeClass('activeVessel')
+		})
+			
+		$('.verifiedSelector').each(updateVerifiedRowColor)
+	}
+	
+	function updateVerifiedRowColor(){
+		if($(this).val() == 'None')
+				$($(this).parent().parent()).css('background-color','')
+		if($(this).val() == 'True')
+			$($(this).parent().parent()).css('background-color','#d9ffb3')
+		if($(this).val() == 'False')
+			$($(this).parent().parent()).css('background-color','#ff9999')
+	}
+	
+});
+</script>
+
+<script type="text/javascript">
+    $(function () {
+
+    });
+</script>
+
+</body>
+</html>
