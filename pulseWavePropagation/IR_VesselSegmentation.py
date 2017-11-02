@@ -27,8 +27,8 @@ the steps are:
     2 = Vessel width measurement
     3 = Define Vessel Classes (Artery/Vein)
 '''
-pipeline_step = 3
-pathWithSequences = "C:\\Users\\DIN035\\Documents\\Project\\ViktorDinkel\\ViktorDinkel\\06_test\\"
+pipeline_step = 2
+pathWithSequences = "C:\\Users\\Vik\\Desktop\\CSIRO\\largerfiles\\vesselAnalysis\\"
 
 # ENTER PATH OF FOLDER WHICH CONTAIN SEQUENCE FOLDER
 # the structure should look like this:
@@ -45,7 +45,6 @@ baseDirs = glob(pathWithSequences+"*\\")
 
 for baseDir in baseDirs:
 
-    #import pdb; pdb.set_trace()
 
     with open(pathWithSequences+'\\processed.txt', "a") as myProcess:
         myProcess.write(baseDir + "\n")
@@ -60,8 +59,14 @@ for baseDir in baseDirs:
     cfg.imgDirMeta = baseDir+'metadata.json'
     cfg.gifImgDir = cfg.imgDir
 
+    widthAnalysis.performZoneAnalysis2(cfg.imgDir)
+
+    import pdb;
+
+    pdb.set_trace()
+
     '''this adds a bracket to the metadata.txt (to make it a valid json) and saves it as jsn-file'''
-    utils.fixMetadataJSON(cfg.baseDir)
+    #utils.fixMetadataJSON(cfg.baseDir)
 
     '''Read configuration'''
     if (pipeline_step==2):

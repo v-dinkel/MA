@@ -1,0 +1,8 @@
+Anaconda
+	- opencv
+	- numpy
+	- matplotlib
+	- mahotas
+	- pymorph
+	- peakutils
+	- mysql-python

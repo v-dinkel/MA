@@ -310,6 +310,70 @@ def performZoneAnalysis(imgDir, ImageFileList, time):
         np.save(imgDir + '\\results\\'+zone+'\\classifiedVesselData.npy', MM)
     return
 
+def performZoneAnalysis2(imgDir):
+    zones = ['B', 'C']
+    for zone in zones:
+        print '====== Width Analysis for Zone ' + zone + ' ======'
+        # loading not necessary but to preserve continuity
+        measurements = np.load(imgDir + '\\results\\' + zone + '\\measurements.npy').item()
+        time = sorted(measurements.keys())
+
+        uniq = list(itertools.chain.from_iterable([measurements[k].keys() for k in time]))
+        vessels = [k for k in set(uniq)]
+
+        """ Create a Matrix with row = single vessel widths, col = time """
+        M = []
+        for key in vessels:
+            vals = []
+            for t in time:
+                try:
+                    vals.append(measurements[t][key])
+                except:
+                    vals.append(np.nan)
+            M.append(vals)
+        plotAllVessels(M, time, vessels, zone)
+
+        """ fit the widths to a curve and get statistics about elasticity, frequency etc. """
+        errorVals = []
+        matrixOrder = ['zone', 'vessel', 'elasticity', 'bpm', 'phase', 'offset', 'avgMin', 'avgMax', 'score'] # later added: outlierClass[0=ok,1=outlier]; vesselClassification[0=none,1=artery,2=vein]
+        outlierClassificationParameters = ['elasticity', 'bpm', 'phase']
+        MM = []
+        MMa = []
+
+        for vessel in vessels:
+            vals = [measurements[k][vessel] if  vessel in measurements[k].keys() else np.nan for k in time]
+
+            nanIndeces = [i for i, ltr in enumerate(vals) if np.isnan(ltr)]
+            timeWithoutNan = [i for j, i in enumerate(time) if j not in nanIndeces]
+            valsWithoutNan = [i for j, i in enumerate(vals) if j not in nanIndeces]
+
+            mean = np.mean(valsWithoutNan)
+            std = np.std(valsWithoutNan)
+            elasticity = (((mean+std)/(mean-std))-1.0)*100.0
+
+            indexes_max, mean_peak_max, std_max = detect_peaks(timeWithoutNan, np.array(valsWithoutNan), .04, .2)
+            indexes_min, mean_peak_min, std_min = detect_peaks(timeWithoutNan, np.array(valsWithoutNan)*-1, .04, .2)
+
+            plt.clf()
+            plt.plot(timeWithoutNan, valsWithoutNan)
+            for i in indexes_max:
+                plt.plot(timeWithoutNan[i], valsWithoutNan[i], 'o', color='r')
+            for i in indexes_min:
+                plt.plot(timeWithoutNan[i], valsWithoutNan[i], 'o', color='y')
+            plt.axhline(y=mean_peak_max + std_max, color='b', linestyle='-')
+            plt.axhline(y=(mean_peak_min * -1) - std_min, color='b', linestyle='-')
+
+            plt.axhline(y=mean+std, color='r', linestyle='-')
+            plt.axhline(y=mean-std, color='r', linestyle='-')
+
+            plt.axhline(y=mean, color='g', linestyle='-')
+
+            #plt.savefig(imgDir + "\\results\\" + zone + '\\' + vessel + ".png")
+            #plt.clf()
+            plt.show()
+            # plt.plot(timeWithoutNan, valsWithoutNan)
+
+
 def reject_outliers(data, m=2):
     return data[abs(data - np.mean(data)) < m * np.std(data)]
 

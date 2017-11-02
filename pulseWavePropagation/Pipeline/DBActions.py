@@ -332,8 +332,8 @@ def fixResults(imgDir, baseDir, saveToDb = False):
             timeWithoutNan = [i for j, i in enumerate(time) if j not in nanIndeces]
             valsWithoutNan = [i for j, i in enumerate(vals) if j not in nanIndeces]
 
-            mean = np.mean(valsWithoutNan)
-            std = np.std(valsWithoutNan)
+            mean = np.mean(reject_outliers(np.array(valsWithoutNan), 1))
+            std = np.std(reject_outliers(np.array(valsWithoutNan), 1))
             elasticity = (((mean+std)/(mean-std))-1.0)*100.0
             #reject_outliers(np.array(valsWithoutNan), 1)
 
